@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Musical 🎶</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+      background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #5f27cd, #1dd1a1);
+      background-size: 400% 400%;
+      animation: fondoAnimado 12s ease infinite;
+      padding: 20px;
+    }
+
+    @keyframes fondoAnimado {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(6px);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2.3rem;
+      margin-bottom: 10px;
+    }
+
+    .numero-actual {
+      font-size: 5rem;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .cancion {
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      min-height: 40px;
+    }
+
+    .botones {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 14px 22px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      background: white;
+      color: #333;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: #f2f2f2;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .estado-juego {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 16px 0 20px;
+    }
+
+    .tarjeta-estado {
+      background: rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 12px 18px;
+      min-width: 150px;
+      font-weight: bold;
+    }
+
+    .tarjeta-estado span {
+      display: block;
+      font-size: 1.6rem;
+      margin-top: 4px;
+    }
+
+    .info {
+      font-size: 0.95rem;
+      margin-bottom: 18px;
+    }
+
+    .panel-numeros {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .panel-numeros h2 {
+      text-align: center;
+      margin-bottom: 14px;
+      font-size: 1.4rem;
+    }
+
+    .grid-numeros {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .casilla-numero {
+      background: rgba(255, 255, 255, 0.92);
+      color: #222;
+      border-radius: 10px;
+      padding: 8px 4px;
+      text-align: center;
+      font-weight: bold;
+      min-height: 54px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    .casilla-numero .numero-base {
+      font-size: 1rem;
+      line-height: 1.1;
+    }
+
+    .casilla-numero .orden-salida {
+      font-size: 0.78rem;
+      line-height: 1.1;
+      opacity: 0;
+      margin-top: 3px;
+    }
+
+    .casilla-numero.marcado {
+      background: #e53935;
+      color: white;
+      transform: scale(1.03);
+    }
+
+    .casilla-numero.marcado .orden-salida {
+      opacity: 1;
+    }
+
+    .historial {
+      margin-top: 18px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .historial strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .historial-contenido {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .overlay.visible {
+      opacity: 1;
+      pointer-events: none;
+    }
+
+    .overlay-contenido {
+      text-align: center;
+      border-radius: 30px;
+      transform: scale(0.7);
+      opacity: 0;
+      animation: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .overlay.visible .overlay-contenido {
+      animation: entradaGrande 0.7s ease forwards;
+    }
+
+    .overlay-texto {
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-shadow:
+        0 0 10px rgba(255,255,255,0.8),
+        0 0 20px rgba(255,255,255,0.6),
+        0 0 30px rgba(255,255,255,0.4);
+      margin-bottom: 12px;
+    }
+
+    .overlay-subtexto {
+      font-weight: bold;
+      opacity: 0.95;
+    }
+
+    .overlay.linea .overlay-contenido {
+      background: linear-gradient(135deg, #ffb703, #fb8500, #ffd166);
+      box-shadow: 0 0 35px rgba(255, 183, 3, 0.55);
+      padding: 22px 34px;
+      min-width: 280px;
+      max-width: 420px;
+    }
+
+    .overlay.linea .overlay-texto {
+      font-size: 2.8rem;
+    }
+
+    .overlay.linea .overlay-subtexto {
+      font-size: 1rem;
+    }
+
+    .overlay.bingo .overlay-contenido {
+      background: linear-gradient(135deg, #ff006e, #8338ec, #3a86ff);
+      box-shadow: 0 0 45px rgba(131, 56, 236, 0.65);
+      padding: 40px 60px;
+      min-width: 420px;
+      max-width: 700px;
+    }
+
+    .overlay.bingo .overlay-texto {
+      font-size: 5rem;
+    }
+
+    .overlay.bingo .overlay-subtexto {
+      font-size: 1.5rem;
+    }
+
+    @keyframes entradaGrande {
+      0% {
+        transform: scale(0.4) rotate(-6deg);
+        opacity: 0;
+      }
+      60% {
+        transform: scale(1.1) rotate(2deg);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .numero-actual {
+        font-size: 3.6rem;
+      }
+
+      .cancion {
+        font-size: 1.1rem;
+      }
+
+      .grid-numeros {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .overlay.linea .overlay-contenido {
+        min-width: 220px;
+        max-width: 320px;
+        padding: 18px 24px;
+      }
+
+      .overlay.linea .overlay-texto {
+        font-size: 2.1rem;
+      }
+
+      .overlay.linea .overlay-subtexto {
+        font-size: 0.9rem;
+      }
+
+      .overlay.bingo .overlay-contenido {
+        min-width: 260px;
+        max-width: 90vw;
+        padding: 28px 24px;
+      }
+
+      .overlay.bingo .overlay-texto {
+        font-size: 3rem;
+      }
+
+      .overlay.bingo .overlay-subtexto {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎶 Bingo Musical 🎶</h1>
+
+    <div class="numero-actual" id="numero">?</div>
+    <div class="cancion" id="cancion">Pulsa el botón para empezar</div>
+
+    <div class="botones">
+      <button onclick="siguienteCancion()">Siguiente canción</button>
+      <button onclick="repetirCancion()">Repetir canción</button>
+      <button onclick="cantarLinea()">Cantar línea</button>
+      <button onclick="cantarBingo()">Cantar bingo</button>
+      <button onclick="reiniciarBingo()">Reiniciar bingo</button>
+    </div>
+
+    <div class="estado-juego">
+      <div class="tarjeta-estado">
+        Líneas restantes
+        <span id="lineasRestantes">2</span>
+      </div>
+      <div class="tarjeta-estado">
+        Bingos restantes
+        <span id="bingosRestantes">2</span>
+      </div>
+      <div class="tarjeta-estado">
+        Canciones usadas
+        <span id="usadasContador">0 / 33</span>
+      </div>
+    </div>
+
+    <div class="info" id="info">Todavía no ha salido ninguna canción.</div>
+
+    <div class="panel-numeros">
+      <h2>Números del bingo</h2>
+      <div class="grid-numeros" id="gridNumeros"></div>
+    </div>
+
+    <div class="historial">
+      <strong>Orden de salida</strong>
+      <div class="historial-contenido" id="historialContenido">-</div>
+    </div>
+
+    <audio id="reproductor"></audio>
+  </div>
+
+  <div class="overlay" id="overlayAnimacion">
+    <div class="overlay-contenido">
+      <div class="overlay-texto" id="overlayTexto">LÍNEA</div>
+      <div class="overlay-subtexto" id="overlaySubtexto"></div>
+    </div>
+  </div>
+
+  <script>
+    const canciones = [
+      { numero: 1, titulo: "Macarena", artista: "Los del Río", audio: "audios/01-macarena.mp3" },
+      { numero: 2, titulo: "Aserejé", artista: "Las Ketchup", audio: "audios/02-asereje.mp3" },
+      { numero: 3, titulo: "Bailando", artista: "Enrique Iglesias", audio: "audios/03-bailando.mp3" },
+      { numero: 4, titulo: "Sofía", artista: "Álvaro Soler", audio: "audios/04-sofia.mp3" },
+      { numero: 5, titulo: "El Mismo Sol", artista: "Álvaro Soler", audio: "audios/05-el-mismo-sol.mp3" },
+      { numero: 6, titulo: "Bailando Por Ahí", artista: "Juan Magán", audio: "audios/06-bailando-por-ahi.mp3" },
+      { numero: 7, titulo: "Te Voy A Esperar", artista: "Juan Magán", audio: "audios/07-te-voy-a-esperar.mp3" },
+      { numero: 8, titulo: "Un Beso y Una Flor", artista: "Nino Bravo", audio: "audios/08-un-beso-y-una-flor.mp3" },
+      { numero: 9, titulo: "Súbeme La Radio", artista: "Enrique Iglesias", audio: "audios/09-subeme-la-radio.mp3" },
+      { numero: 10, titulo: "Rayos De Sol", artista: "Henry Méndez", audio: "audios/10-rayos-de-sol.mp3" },
+      { numero: 11, titulo: "Caminando Por La Vida", artista: "Melendi", audio: "audios/11-caminando-por-la-vida.mp3" },
+      { numero: 12, titulo: "Zapatillas", artista: "El Canto del Loco", audio: "audios/12-zapatillas.mp3" },
+      { numero: 13, titulo: "Despacito", artista: "Luis Fonsi", audio: "audios/13-despacito.mp3" },
+      { numero: 14, titulo: "Mon Amour", artista: "Aitana", audio: "audios/14-mon-amour.mp3" },
+      { numero: 15, titulo: "Princesas", artista: "Pereza", audio: "audios/15-princesas.mp3" },
+      { numero: 16, titulo: "A Quién Le Importa", artista: "Alaska", audio: "audios/16-a-quien-le-importa.mp3" },
+      { numero: 17, titulo: "Bulería", artista: "David Bisbal", audio: "audios/17-buleria.mp3" },
+      { numero: 18, titulo: "Ave María", artista: "David Bisbal", audio: "audios/18-ave-maria.mp3" },
+      { numero: 19, titulo: "Cómo Te Atreves", artista: "Morat", audio: "audios/19-como-te-atreves.mp3" },
+      { numero: 20, titulo: "Vivir Mi Vida", artista: "Marc Anthony", audio: "audios/20-vivir-mi-vida.mp3" },
+      { numero: 21, titulo: "Rosa Pastel", artista: "Belanova", audio: "audios/21-rosa-pastel.mp3" },
+      { numero: 22, titulo: "La Gozadera", artista: "Gente de Zona", audio: "audios/22-la-gozadera.mp3" },
+      { numero: 23, titulo: "Bomba", artista: "King África", audio: "audios/23-bomba.mp3" },
+      { numero: 24, titulo: "Sueño Contigo", artista: "Camela", audio: "audios/24-sueno-contigo.mp3" },
+      { numero: 25, titulo: "Limbo", artista: "Daddy Yankee", audio: "audios/25-limbo.mp3" },
+      { numero: 26, titulo: "Pan y Mantequilla", artista: "Efecto Pasillo", audio: "audios/26-pan-y-mantequilla.mp3" },
+      { numero: 27, titulo: "Señorita", artista: "Abraham Mateo", audio: "audios/27-senorita.mp3" },
+      { numero: 28, titulo: "SloMo", artista: "Chanel", audio: "audios/28-slomo.mp3" },
+      { numero: 29, titulo: "Mi Carro", artista: "Manolo Escobar", audio: "audios/29-mi-carro.mp3" },
+      { numero: 30, titulo: "Morocha", artista: "Luck Ra", audio: "audios/30-morocha.mp3" },
+      { numero: 31, titulo: "Que La Detengan", artista: "David Civera", audio: "audios/31-que-la-detengan.mp3" },
+      { numero: 32, titulo: "Salta", artista: "Tequila", audio: "audios/32-salta.mp3" },
+      { numero: 33, titulo: "Vino Tinto", artista: "Estopa", audio: "audios/33-vino-tinto.mp3" }
+    ];
+
+    let cancionesRestantes = [...canciones];
+    let actual = null;
+    let ordenSalida = [];
+    let lineasRestantes = 2;
+    let bingosRestantes = 2;
+
+    const numeroEl = document.getElementById("numero");
+    const cancionEl = document.getElementById("cancion");
+    const infoEl = document.getElementById("info");
+    const reproductor = document.getElementById("reproductor");
+    const gridNumerosEl = document.getElementById("gridNumeros");
+    const historialContenidoEl = document.getElementById("historialContenido");
+    const lineasRestantesEl = document.getElementById("lineasRestantes");
+    const bingosRestantesEl = document.getElementById("bingosRestantes");
+    const usadasContadorEl = document.getElementById("usadasContador");
+    const overlayAnimacion = document.getElementById("overlayAnimacion");
+    const overlayTexto = document.getElementById("overlayTexto");
+    const overlaySubtexto = document.getElementById("overlaySubtexto");
+
+    function crearGridNumeros() {
+      gridNumerosEl.innerHTML = "";
+      for (let i = 1; i <= 99; i++) {
+        const casilla = document.createElement("div");
+        casilla.className = "casilla-numero";
+        casilla.id = "numero-grid-" + i;
+        casilla.innerHTML = `
+          <div class="numero-base">${i}</div>
+          <div class="orden-salida" id="orden-${i}">#</div>
+        `;
+        gridNumerosEl.appendChild(casilla);
+      }
+    }
+
+    function actualizarPanelEstado() {
+      lineasRestantesEl.textContent = lineasRestantes;
+      bingosRestantesEl.textContent = bingosRestantes;
+      usadasContadorEl.textContent = `${ordenSalida.length} / ${canciones.length}`;
+
+      if (ordenSalida.length === 0) {
+        infoEl.textContent = "Todavía no ha salido ninguna canción.";
+      } else {
+        infoEl.textContent = `Han salido ${ordenSalida.length} de ${canciones.length} canciones.`;
+      }
+    }
+
+    function actualizarHistorial() {
+      if (ordenSalida.length === 0) {
+        historialContenidoEl.textContent = "-";
+        return;
+      }
+
+      historialContenidoEl.textContent = ordenSalida
+        .map((item, index) => `#${index + 1}: ${item.numero}`)
+        .join(" · ");
+    }
+
+    function marcarNumeroEnRojo(numero, orden) {
+      const casilla = document.getElementById("numero-grid-" + numero);
+      const ordenEl = document.getElementById("orden-" + numero);
+
+      if (casilla) {
+        casilla.classList.add("marcado");
+      }
+
+      if (ordenEl) {
+        ordenEl.textContent = `#${orden}`;
+      }
+    }
+
+    function siguienteCancion() {
+      if (cancionesRestantes.length === 0) {
+        return;
+      }
+
+      const indiceAleatorio = Math.floor(Math.random() * cancionesRestantes.length);
+      actual = cancionesRestantes[indiceAleatorio];
+      cancionesRestantes.splice(indiceAleatorio, 1);
+
+      numeroEl.textContent = actual.numero;
+      cancionEl.textContent = `${actual.titulo} - ${actual.artista}`;
+
+      ordenSalida.push({
+        numero: actual.numero,
+        titulo: actual.titulo
+      });
+
+      marcarNumeroEnRojo(actual.numero, ordenSalida.length);
+      actualizarHistorial();
+      actualizarPanelEstado();
+      reproducir();
+    }
+
+    function reproducir() {
+      if (!actual) return;
+
+      reproductor.pause();
+      reproductor.currentTime = 0;
+      reproductor.src = actual.audio;
+
+      reproductor.play().catch(() => {});
+    }
+
+    function repetirCancion() {
+      if (!actual) return;
+
+      reproductor.play().catch(() => {});
+    }
+
+    function mostrarOverlay(tipo) {
+      overlayAnimacion.classList.remove("linea", "bingo", "visible");
+
+      if (tipo === "linea") {
+        overlayAnimacion.classList.add("linea");
+        overlayTexto.textContent = "LÍNEA";
+        overlaySubtexto.textContent = "";
+      } else {
+        overlayAnimacion.classList.add("bingo");
+        overlayTexto.textContent = "BINGO";
+        overlaySubtexto.textContent = "";
+      }
+
+      void overlayAnimacion.offsetWidth;
+      overlayAnimacion.classList.add("visible");
+
+      setTimeout(() => {
+        overlayAnimacion.classList.remove("visible");
+      }, tipo === "linea" ? 1500 : 2200);
+    }
+
+    function cantarLinea() {
+      if (lineasRestantes <= 0) return;
+
+      lineasRestantes--;
+      actualizarPanelEstado();
+      mostrarOverlay("linea");
+    }
+
+    function cantarBingo() {
+      if (bingosRestantes <= 0) return;
+
+      bingosRestantes--;
+      actualizarPanelEstado();
+      mostrarOverlay("bingo");
+    }
+
+    function reiniciarBingo() {
+      cancionesRestantes = [...canciones];
+      actual = null;
+      ordenSalida = [];
+      lineasRestantes = 2;
+      bingosRestantes = 2;
+
+      numeroEl.textContent = "?";
+      cancionEl.textContent = "Pulsa el botón para empezar";
+      reproductor.pause();
+      reproductor.currentTime = 0;
+      reproductor.removeAttribute("src");
+
+      document.querySelectorAll(".casilla-numero").forEach(casilla => {
+        casilla.classList.remove("marcado");
+      });
+
+      for (let i = 1; i <= 99; i++) {
+        const ordenEl = document.getElementById("orden-" + i);
+        if (ordenEl) {
+          ordenEl.textContent = "#";
+        }
+      }
+
+      overlayAnimacion.classList.remove("linea", "bingo", "visible");
+
+      actualizarHistorial();
+      actualizarPanelEstado();
+    }
+
+    crearGridNumeros();
+    actualizarHistorial();
+    actualizarPanelEstado();
+  </script>
+</body>
+</html>
