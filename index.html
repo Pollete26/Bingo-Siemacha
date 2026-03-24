@@ -260,13 +260,13 @@
   <div class="botones">
     <button onclick="siguiente()">Siguiente / Next / Następna</button>
     <button onclick="repetir()">Repetir / Repeat / Powtórz</button>
-    <button onclick="linea()">Línea / Line / Linia</button>
+    <button onclick="linea()">Línea / Row / Wiersz</button>
     <button onclick="bingo()">Bingo</button>
     <button onclick="reiniciarBingo()">Reiniciar / Reset / Resetuj</button>
   </div>
 
   <div class="estado">
-    <div class="tarjeta-estado">Líneas / Lines / Linie <span id="lineasRestantes">2</span></div>
+    <div class="tarjeta-estado">Líneas / Rows / Wiersz <span id="lineasRestantes">2</span></div>
     <div class="tarjeta-estado">Bingos <span id="bingosRestantes">2</span></div>
   </div>
 
@@ -523,7 +523,7 @@ function linea(){
   if(lineasRestantes <= 0) return;
   lineasRestantes--;
   actualizarContadores();
-  mostrarOverlay("LÍNEA / LINE / LINIA", "linea", false);
+  mostrarOverlay("LÍNEA / ROW / WIERSZ", "linea", false);
   lanzarConfeti("linea");
 }
 
