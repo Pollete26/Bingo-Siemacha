@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bingo Musical 🎶</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  color:white;
+  text-align:center;
+  background: linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb,#5f27cd,#1dd1a1);
+  background-size:400% 400%;
+  animation:bg 12s infinite;
+}
+
+@keyframes bg{
+  0%{background-position:0%}
+  50%{background-position:100%}
+  100%{background-position:0%}
+}
+
+/* PORTADA */
+.portada{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.82);
+  z-index:99999;
+}
+
+.portada h1{
+  font-size:60px;
+  margin-bottom:20px;
+  animation:zoom 1s ease;
+}
+
+.portada p{
+  font-size:20px;
+  opacity:0.85;
+  margin-bottom:30px;
+}
+
+@keyframes zoom{
+  0%{transform:scale(0.5);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+
+.portada button{
+  font-size:20px;
+  padding:15px 30px;
+  border:none;
+  border-radius:15px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+/* CONTENIDO */
+.container{
+  max-width:1200px;
+  margin:0 auto;
+  padding:20px;
+}
+
+.numero{
+  font-size:80px;
+  margin-top:20px;
+  font-weight:bold;
+}
+
+#cancion{
+  font-size:24px;
+  margin-bottom:20px;
+  min-height:32px;
+}
+
+button{
+  padding:10px 15px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.botones{
+  margin-bottom:18px;
+}
+
+.estado{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:22px;
+}
+
+.tarjeta-estado{
+  background:rgba(255,255,255,0.16);
+  padding:12px 18px;
+  border-radius:14px;
+  min-width:170px;
+  font-weight:bold;
+}
+
+.tarjeta-estado span{
+  display:block;
+  margin-top:6px;
+  font-size:28px;
+}
+
+/* GRID */
+.panel-numeros{
+  margin-top:25px;
+}
+
+.grid-numeros{
+  display:grid;
+  grid-template-columns:repeat(10, minmax(0,1fr));
+  gap:8px;
+  max-width:900px;
+  margin:15px auto 0;
+}
+
+.casilla-numero{
+  background:rgba(255,255,255,0.92);
+  color:#222;
+  border-radius:10px;
+  padding:8px 4px;
+  font-weight:bold;
+  min-height:52px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+
+.casilla-numero.marcado{
+  background:#e53935;
+  color:white;
+}
+
+.orden-salida{
+  font-size:12px;
+  opacity:0;
+}
+
+.casilla-numero.marcado .orden-salida{
+  opacity:1;
+}
+
+/* OVERLAY */
+.overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.6);
+  opacity:0;
+  pointer-events:none;
+  z-index:9999;
+}
+
+.overlay.visible{
+  opacity:1;
+}
+
+.overlay-box{
+  position:relative; /* 🔥 IMPORTANTE */
+  padding:50px;
+  border-radius:30px;
+  transform:scale(0.6);
+  opacity:0;
+  font-weight:900;
+}
+
+.overlay.visible .overlay-box{
+  animation:pop 0.6s forwards;
+}
+
+@keyframes pop{
+  0%{transform:scale(0.4)}
+  60%{transform:scale(1.2)}
+  100%{transform:scale(1)}
+}
+
+.linea{
+  background:linear-gradient(45deg,#ffb703,#fb8500);
+  font-size:70px;
+}
+
+.bingo{
+  background:linear-gradient(45deg,#ff006e,#8338ec,#3a86ff);
+  font-size:110px;
+}
+
+/* CONFETI */
+#confeti{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+}
+
+/* LUCES */
+.light{
+  position:absolute;
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:white;
+  box-shadow:0 0 20px white;
+  animation:blink 0.5s infinite alternate;
+}
+
+@keyframes blink{
+  from{opacity:0.3}
+  to{opacity:1}
+}
+</style>
+</head>
+
+<body>
+
+<div class="portada" id="portada">
+  <h1>🎶 Bingo Musical 🎶</h1>
+  <p>¡Prepárate para jugar! / Przygotuj się do gry!</p>
+  <button onclick="empezar()">▶️ Empezar / Rozpocznij</button>
+</div>
+
+<div class="container">
+<h1>🎶 Bingo Musical 🎶</h1>
+
+<div class="numero" id="numero">?</div>
+<div id="cancion">Pulsa empezar / Naciśnij start</div>
+
+<div class="botones">
+<button onclick="siguiente()">Siguiente / Następna</button>
+<button onclick="repetir()">Repetir / Powtórz</button>
+<button onclick="linea()">Línea / Linia</button>
+<button onclick="bingo()">Bingo</button>
+<button onclick="reiniciarBingo()">Reiniciar / Resetuj</button>
+</div>
+
+<div class="estado">
+<div class="tarjeta-estado">Líneas / Linie <span id="lineasRestantes">2</span></div>
+<div class="tarjeta-estado">Bingos <span id="bingosRestantes">2</span></div>
+</div>
+
+<div class="panel-numeros">
+<h2>Números / Numery</h2>
+<div class="grid-numeros" id="gridNumeros"></div>
+</div>
+
+<audio id="audio"></audio>
+</div>
+
+<canvas id="confeti"></canvas>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-box" id="box"></div>
+</div>
+
+<script>
+function empezar(){
+  document.getElementById("portada").style.display="none";
+}
+
+const canciones=[
+{numero:1,titulo:"Macarena",audio:"audios/01-macarena.mp3"},
+{numero:2,titulo:"Asereje",audio:"audios/02-asereje.mp3"},
+{numero:3,titulo:"Bailando",audio:"audios/03-bailando.mp3"},
+{numero:4,titulo:"Sofía",audio:"audios/04-sofia.mp3"},
+{numero:35,titulo:"Nic do stracenia",audio:"audios/35-nic-dostracenia.mp3"}
+];
+
+let restantes=[...canciones];
+let actual=null;
+let ordenSalida=[];
+let lineasRestantes=2;
+let bingosRestantes=2;
+
+const num=document.getElementById("numero");
+const txt=document.getElementById("cancion");
+const audio=document.getElementById("audio");
+const overlay=document.getElementById("overlay");
+const box=document.getElementById("box");
+
+function crearGrid(){
+  const grid=document.getElementById("gridNumeros");
+  for(let i=1;i<=99;i++){
+    let div=document.createElement("div");
+    div.className="casilla-numero";
+    div.id="n"+i;
+    div.innerHTML=i+"<div class='orden-salida' id='o"+i+"'></div>";
+    grid.appendChild(div);
+  }
+}
+crearGrid();
+
+function marcar(numReal,orden){
+  document.getElementById("n"+numReal).classList.add("marcado");
+  document.getElementById("o"+numReal).innerText="#"+orden;
+}
+
+function siguiente(){
+  let i=Math.floor(Math.random()*restantes.length);
+  actual=restantes[i];
+  restantes.splice(i,1);
+
+  num.innerText=actual.numero;
+  txt.innerText=actual.titulo;
+
+  ordenSalida.push(actual.numero);
+  marcar(actual.numero,ordenSalida.length);
+
+  audio.src=actual.audio;
+  audio.play();
+}
+
+function repetir(){
+  audio.play();
+}
+
+/* LUCES CORREGIDAS */
+function crearLuces(){
+  box.querySelectorAll(".light").forEach(l=>l.remove());
+
+  const width=box.offsetWidth;
+  const height=box.offsetHeight;
+  const total=30;
+
+  for(let i=0;i<total;i++){
+    let l=document.createElement("div");
+    l.className="light";
+
+    let pos=i/total;
+
+    if(pos<0.25){
+      l.style.left=(pos*4*width)+"px";
+      l.style.top="0px";
+    }else if(pos<0.5){
+      l.style.left=(width-15)+"px";
+      l.style.top=((pos-0.25)*4*height)+"px";
+    }else if(pos<0.75){
+      l.style.left=(width-(pos-0.5)*4*width)+"px";
+      l.style.top=(height-15)+"px";
+    }else{
+      l.style.left="0px";
+      l.style.top=(height-(pos-0.75)*4*height)+"px";
+    }
+
+    box.appendChild(l);
+  }
+}
+
+function linea(){
+  if(lineasRestantes<=0)return;
+  lineasRestantes--;
+  document.getElementById("lineasRestantes").innerText=lineasRestantes;
+
+  box.className="overlay-box linea";
+  box.innerText="LÍNEA / LINIA";
+  overlay.classList.add("visible");
+
+  setTimeout(()=>overlay.classList.remove("visible"),20000);
+}
+
+function bingo(){
+  if(bingosRestantes<=0)return;
+  bingosRestantes--;
+  document.getElementById("bingosRestantes").innerText=bingosRestantes;
+
+  box.className="overlay-box bingo";
+  box.innerText="BINGO";
+  overlay.classList.add("visible");
+
+  crearLuces();
+
+  setTimeout(()=>overlay.classList.remove("visible"),20000);
+}
+
+function reiniciarBingo(){
+  location.reload();
+}
+</script>
+
+</body>
+</html>
