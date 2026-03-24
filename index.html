@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bingo Musical 🎶</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  color:white;
+  text-align:center;
+  background: linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb,#5f27cd,#1dd1a1);
+  background-size:400% 400%;
+  animation:bg 12s infinite;
+}
+
+@keyframes bg{
+0%{background-position:0%}
+50%{background-position:100%}
+100%{background-position:0%}
+}
+
+/* PORTADA */
+.portada{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.8);
+  z-index:99999;
+}
+
+.portada h1{
+  font-size:60px;
+  margin-bottom:20px;
+  animation:zoom 1s ease;
+}
+
+.portada p{
+  font-size:20px;
+  opacity:0.8;
+  margin-bottom:30px;
+}
+
+@keyframes zoom{
+0%{transform:scale(0.5);opacity:0}
+100%{transform:scale(1);opacity:1}
+}
+
+.portada button{
+  font-size:20px;
+  padding:15px 30px;
+  border:none;
+  border-radius:15px;
+  cursor:pointer;
+}
+
+/* CONTENIDO */
+.container{
+  padding:20px;
+}
+
+.numero{
+  font-size:80px;
+}
+
+button{
+  padding:10px 15px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+/* OVERLAY */
+.overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.6);
+  opacity:0;
+  pointer-events:none;
+  z-index:9999;
+}
+
+.overlay.visible{
+  opacity:1;
+}
+
+.overlay-box{
+  padding:50px;
+  border-radius:30px;
+  transform:scale(0.6);
+  opacity:0;
+}
+
+.overlay.visible .overlay-box{
+  animation:pop 0.6s forwards;
+}
+
+@keyframes pop{
+0%{transform:scale(0.4)}
+60%{transform:scale(1.2)}
+100%{transform:scale(1)}
+}
+
+.linea{
+  background:linear-gradient(45deg,#ffb703,#fb8500);
+  font-size:70px;
+}
+
+.bingo{
+  background:linear-gradient(45deg,#ff006e,#8338ec,#3a86ff);
+  font-size:110px;
+}
+
+/* CONFETI */
+#confeti{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+}
+
+/* LUCES */
+.light{
+  position:absolute;
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:white;
+  box-shadow:0 0 20px white;
+  animation:blink 0.5s infinite alternate;
+}
+
+@keyframes blink{
+from{opacity:0.3}
+to{opacity:1}
+}
+</style>
+</head>
+
+<body>
+
+<!-- PORTADA -->
+<div class="portada" id="portada">
+  <h1>🎶 Bingo Musical 🎶</h1>
+  <p>¡Prepárate para jugar! / Przygotuj się do gry!</p>
+  <button onclick="empezar()">▶️ Empezar / Rozpocznij</button>
+</div>
+
+<div class="container">
+<h1>🎶 Bingo Musical 🎶</h1>
+
+<div class="numero" id="numero">?</div>
+<div id="cancion">Pulsa empezar / Naciśnij start</div>
+
+<button onclick="siguiente()">Siguiente / Następna</button>
+<button onclick="repetir()">Repetir / Powtórz</button>
+<button onclick="linea()">Línea / Linia</button>
+<button onclick="bingo()">Bingo / Bingo</button>
+
+<audio id="audio"></audio>
+</div>
+
+<canvas id="confeti"></canvas>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-box" id="box"></div>
+</div>
+
+<script>
+
+/* PORTADA */
+function empezar(){
+  document.getElementById("portada").style.display="none";
+}
+
+/* CANCIONES */
+const canciones=[
+{numero:1,titulo:"Macarena",audio:"audios/01-macarena.mp3"},
+{numero:2,titulo:"Asereje",audio:"audios/02-asereje.mp3"},
+{numero:34,titulo:"Zapnij pas",audio:"audios/34-zapnij-pas.mp3"},
+{numero:35,titulo:"Nic do stracenia",audio:"audios/35-nic-dostracenia.mp3"}
+];
+
+let restantes=[...canciones];
+let actual=null;
+
+const num=document.getElementById("numero");
+const txt=document.getElementById("cancion");
+const audio=document.getElementById("audio");
+const overlay=document.getElementById("overlay");
+const box=document.getElementById("box");
+
+/* CONFETI */
+const canvas=document.getElementById("confeti");
+const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+let confeti=[];
+
+function lanzarConfeti(potente=false){
+  confeti=[];
+  let cantidad=potente?300:120;
+
+  for(let i=0;i<cantidad;i++){
+    confeti.push({
+      x:Math.random()*canvas.width,
+      y:Math.random()*canvas.height-canvas.height,
+      size:Math.random()*10+5,
+      speed:Math.random()*4+2,
+      color:`hsl(${Math.random()*360},100%,60%)`
+    });
+  }
+  animar();
+}
+
+function animar(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  confeti.forEach(p=>{
+    p.y+=p.speed;
+    ctx.fillStyle=p.color;
+    ctx.fillRect(p.x,p.y,p.size,p.size);
+  });
+  requestAnimationFrame(animar);
+}
+
+/* JUEGO */
+function siguiente(){
+  if(restantes.length===0)return;
+  let i=Math.floor(Math.random()*restantes.length);
+  actual=restantes[i];
+  restantes.splice(i,1);
+
+  num.innerText=actual.numero;
+  txt.innerText=actual.titulo;
+
+  audio.src=actual.audio;
+  audio.play();
+}
+
+function repetir(){
+  audio.play();
+}
+
+/* LINEA */
+function linea(){
+  box.className="overlay-box linea";
+  box.innerText="LÍNEA / LINIA";
+  overlay.classList.add("visible");
+
+  lanzarConfeti(false);
+
+  setTimeout(()=>overlay.classList.remove("visible"),20000);
+}
+
+/* BINGO */
+function bingo(){
+  box.className="overlay-box bingo";
+  box.innerText="BINGO";
+  overlay.classList.add("visible");
+
+  lanzarConfeti(true);
+  crearLuces();
+
+  setTimeout(()=>overlay.classList.remove("visible"),20000);
+}
+
+/* LUCES BIEN COLOCADAS */
+function crearLuces(){
+  let contenedor=overlay.querySelector(".overlay-box");
+  let width=contenedor.offsetWidth;
+  let height=contenedor.offsetHeight;
+
+  for(let i=0;i<30;i++){
+    let l=document.createElement("div");
+    l.className="light";
+
+    let pos=i/30;
+
+    if(pos<0.25){
+      l.style.left=(pos*4*width)+"px";
+      l.style.top="0px";
+    }else if(pos<0.5){
+      l.style.left=width+"px";
+      l.style.top=((pos-0.25)*4*height)+"px";
+    }else if(pos<0.75){
+      l.style.left=(width-(pos-0.5)*4*width)+"px";
+      l.style.top=height+"px";
+    }else{
+      l.style.left="0px";
+      l.style.top=(height-(pos-0.75)*4*height)+"px";
+    }
+
+    overlay.appendChild(l);
+
+    setTimeout(()=>l.remove(),2000);
+  }
+}
+</script>
+
+</body>
+</html>
